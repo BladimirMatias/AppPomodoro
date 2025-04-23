@@ -68,8 +68,11 @@ pomodoro-app/
 Haz fork del proyecto
 
 Crea una rama (git checkout -b feature/nueva-funcionalidad)
+
 Haz commit de tus cambios (git commit -m 'Agrega nueva funcionalidad')
+
 Haz push a la rama (git push origin feature/nueva-funcionalidad)
+
 Abre un Pull Request
 
 📜 Licencia
