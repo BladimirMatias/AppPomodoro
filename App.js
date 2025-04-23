@@ -6,37 +6,85 @@ import Show from './components/Show.js';
 import Tabs from './components/tabs.js';
 import { useEffect, useState } from 'react';
 import { Audio } from 'expo-av';
-
+import * as Notifications from "expo-notifications";
+import { enviarNotificacion } from './utilities/notifications.js';
 
 export default function App() { 
-
   const [tiempo, setTiempo] = useState(25 * 60);
-  const [seleccion, setSeleccion] = useState(0); // Cambiado a número para el índice
+  const [seleccion, setSeleccion] = useState(0);
   const [run, setRun] = useState(false);
   
-  // Colores para cada tab
   const colores = ["#04D96F", "#FF6B6B", "#FFD166"];
+  const alarma = require("./assets/sound/alarmclock.mp3");
 
+  // Configuración inicial de notificaciones
+  useEffect(() => {
+    const configurarNotificaciones = async () => {
+      await Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
+
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+    };
+
+    configurarNotificaciones();
+  }, []);
+
+  // Efecto para el temporizador
   useEffect(() => {
     let intervalo;
     
     if (run && tiempo > 0) {
       intervalo = setInterval(() => {
         setTiempo(tiempoAnterior => tiempoAnterior - 1);
-      }, 1000); // 1000 milisegundos = 1 segundo
+      }, 1);
     }
     
-    // Limpieza del intervalo cuando el componente se desmonta o run cambia
     return () => clearInterval(intervalo);
-  }, [run, tiempo]); // Se ejecuta cuando run o tiempo cambian
+  }, [run, tiempo]);
 
+  // Efecto para cuando el tiempo llega a cero
   useEffect(() => {
-    // Reinicia el tiempo según la selección
-    if (seleccion === 0) setTiempo(25 * 60); // Pomodoro
+    const manejarTiempoCero = async () => {
+      if (tiempo === 0 && run) {
+        setRun(false);
+        
+        try {
+          // Reproducir sonido de alarma
+          const { sound } = await Audio.Sound.createAsync(alarma);
+          await sound.playAsync();
+          
+          // Enviar notificación
+          await enviarNotificacion();
+          
+          // Liberar recurso de sonido
+          sound.setOnPlaybackStatusUpdate((status) => {
+            if (status.didJustFinish) {
+              sound.unloadAsync();
+            }
+          });
+        } catch (error) {
+          console.log("Error:", error);
+        }
+      }
+    };
+
+    manejarTiempoCero();
+  }, [tiempo, run]);
+
+  // Efecto para reiniciar tiempo al cambiar de tab
+  useEffect(() => {
+    if (seleccion === 0) setTiempo(25 * 60);  // Pomodoro
     else if (seleccion === 1) setTiempo(5 * 60); // Descanso corto
     else setTiempo(15 * 60); // Descanso largo
     
-    // También detenemos el temporizador al cambiar
     setRun(false);
   }, [seleccion]);
 
@@ -51,7 +99,7 @@ export default function App() {
       <View
         style={[
           styles.container,
-          Platform.OS === "android" && { paddingTop: 25 },
+          Platform.OS === "ios" && { paddingTop: 25 },
           { backgroundColor: colores[seleccion] }
         ]}
       >
