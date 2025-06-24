@@ -19,10 +19,24 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "FOREGROUND_SERVICE"
+      ],
+      "foregroundService": {
+        "notificationTitle": "App Pomodoro",
+        "notificationBody": "El temporizador está corriendo en segundo plano."
+      },
+      "package": "com.gabote08.AppPomodoro"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "37300a48-5836-46f8-bc87-fa96fafec894"
+      }
+    },
+    "owner": "gabote08"
   }
 }
